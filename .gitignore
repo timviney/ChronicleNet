@@ -427,3 +427,49 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+# JetBrains Rider / ReSharper
+.idea/
+*.sln.iml
+
+# Rider generated files
+.idea/**/workspace.xml
+.idea/**/tasks.xml
+.idea/**/usage.statistics.xml
+.idea/**/dictionaries/
+.idea/**/shelf/
+
+# Local test / benchmark output
+TestResults/
+BenchmarkDotNet.Artifacts/
+*.benchmark.json
+
+# Coverage
+coverage/
+*.coverage
+*.coveragexml
+
+# Local development data
+.local/
+.localdata/
+data/
+data/**/*.dat
+
+# ChronicleNet runtime files
+queue/
+queues/
+*.cq4
+*.cq4t
+
+# Generated market data / replay files
+market-data/
+replay-data/
+recordings/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
