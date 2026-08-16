@@ -10,9 +10,7 @@ This repository currently contains no implementation. It exists as a starting po
 
 [Chronicle Queue](https://github.com/OpenHFT/Chronicle-Queue) is a Java-based persisted messaging system designed for extremely low-latency applications, with particular relevance to trading and other high-performance systems.
 
-The goal of ChronicleNet is **not** to produce a production-ready port of Chronicle Queue.
-
-Instead, this project aims to explore how the same broad concepts could be implemented using modern C# and .NET, including:
+The goal of ChronicleNet to explore how the same broad concepts could be implemented using modern C# and .NET, including:
 
 - Append-only persisted event streams
 - Memory-mapped files
@@ -23,8 +21,6 @@ Instead, this project aims to explore how the same broad concepts could be imple
 - Event replay
 - Concurrent access
 - Predictable tail latency
-
-The project is primarily an **engineering and learning exercise**, with the eventual goal of producing something useful to experiment with and discuss in technical interviews.
 
 ## Planned Architecture
 
