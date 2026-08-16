@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/benchmarks/">
+    <Project Path="benchmarks/ChronicleNet.Benchmarks/ChronicleNet.Benchmarks.csproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/ChronicleNet.Cli/ChronicleNet.Cli.csproj" />
+    <Project Path="src/ChronicleNet/ChronicleNet.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/ChronicleNet.Tests/ChronicleNet.Tests.csproj" />
+  </Folder>
+</Solution>
