@@ -17,10 +17,10 @@
 
 ## 3. Segment (day) file
 
-- [ ] 3.1 Implement file header write/read/validate (magic `CNQF`, version 1, cycle,
+- [x] 3.1 Implement file header write/read/validate (magic `CNQF`, version 1, cycle,
   reserved) per design D1; unknown magic/version → explicit format exception
-- [ ] 3.2 Implement segment creation/opening for a given cycle (`yyyyMMdd.cnq`, UTC)
-- [ ] 3.3 Implement the resume scan: walk records from offset 16 to the first non-ready
+- [x] 3.2 Implement segment creation/opening for a given cycle (`yyyyMMdd.cnq`, UTC)
+- [x] 3.3 Implement the resume scan: walk records from offset 16 to the first non-ready
   header; return write position and record count (design D3)
 
 ## 4. Appender

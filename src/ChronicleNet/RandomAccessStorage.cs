@@ -19,6 +19,7 @@ internal sealed class RandomAccessStorage(
         RandomAccess.Write(_handle, data, offset);
     }
 
+    /// <returns>the number of bytes read</returns>
     public int ReadAt(long offset, Span<byte> buffer)
         => RandomAccess.Read(_handle, buffer, offset); // buffer.Length defines the maximum number of bytes to read
 
