@@ -1,0 +1,75 @@
+# Tasks: add-core-queue
+
+## 1. Framing primitives
+
+- [x] 1.1 Add internal framing constants (`NotComplete`, `MetaData`, `LengthMask`,
+  `EndOfData` mark, max payload length) and header encode/decode helpers
+  (little-endian via `BinaryPrimitives`)
+- [ ] 1.2 Add alignment helper (4-byte record alignment: padded record length from
+  payload length)
+
+## 2. Storage seam and RandomAccess implementation
+
+- [ ] 2.1 Define the internal storage seam (`WriteAt` / `ReadAt` / `Length` / `Flush`)
+  per design D5
+- [ ] 2.2 Implement the seam over one `FileStream` (`FileShare.ReadWrite`) using
+  `System.IO.RandomAccess`, with chunked pre-grow (default 64 MB, configurable)
+
+## 3. Segment (day) file
+
+- [ ] 3.1 Implement file header write/read/validate (magic `CNQF`, version 1, cycle,
+  reserved) per design D1; unknown magic/version → explicit format exception
+- [ ] 3.2 Implement segment creation/opening for a given cycle (`yyyyMMdd.cnq`, UTC)
+- [ ] 3.3 Implement the resume scan: walk records from offset 16 to the first non-ready
+  header; return write position and record count (design D3)
+
+## 4. Appender
+
+- [ ] 4.1 Implement `Append(ReadOnlySpan<byte>) → long index`: payload length validation
+  (1 … 2³⁰−1), claim+payload write, 4-byte commit write, index assignment
+  (`(cycle << 32) | sequence`)
+- [ ] 4.2 Serialize all appends through the queue's single-writer lock
+- [ ] 4.3 Roll on UTC day change via injected `TimeProvider`: write end-of-data mark,
+  open next day's segment; clamp on clock-backwards (design D7)
+
+## 5. Tailer
+
+- [ ] 5.1 Implement independent cursor (`cycle`, `offset`) with `ToStart()` / `ToEnd()`
+- [ ] 5.2 Implement `TryRead(out ReadOnlySpan<byte>)` with poll semantics: zero/WIP/
+  implausible header → not present; end-of-data mark → follow to next day's file when
+  it exists; complete record → span over pooled buffer, valid until next read
+- [ ] 5.3 Expose `CurrentIndex`; document span lifetime in XML docs
+
+## 6. Queue
+
+- [ ] 6.1 Implement `Queue` open/create over a directory, `CreateAppender()` /
+  `CreateTailer()`, writer lock, day-file handle management, `IDisposable`
+- [ ] 6.2 Add `QueueOptions` (TimeProvider, pre-grow chunk size) with documented defaults
+- [ ] 6.3 Document the durability boundary (survives process death, not power loss) in
+  public API docs
+
+## 7. Tests (xUnit)
+
+- [ ] 7.1 Golden-byte format test: known payloads produce exactly the documented bytes
+  (file header, record headers, alignment padding)
+- [ ] 7.2 Round-trip: appended payloads read back in order; indexes assigned sequentially
+  per day
+- [ ] 7.3 Payload validation: empty and oversized appends rejected, queue unchanged
+- [ ] 7.4 WIP invisibility: a record with WIP set is never returned; commit makes it
+  readable
+- [ ] 7.5 Roll tests with fake `TimeProvider`: midnight roll writes end-of-data mark and
+  continues in new file; tailer follows across the roll; clock-backwards keeps appending
+  to the active file
+- [ ] 7.6 Restart resume: reopen same day preserves records and continues sequence;
+  fabricated WIP tail is superseded by the next append after reopen
+- [ ] 7.7 Multi-tailer independence: two tailers from different positions each see every
+  record; reading while writing reports not-present then observes the new record
+- [ ] 7.8 Concurrent appends from multiple threads yield all records exactly once in a
+  valid total order
+- [ ] 7.9 Fresh-handle read test: committed records readable through a newly opened file
+  handle without explicit flush
+
+## 8. Verification
+
+- [ ] 8.1 `dotnet test` green; no third-party dependencies added to the core library
+- [ ] 8.2 Update README status line (project has entered active development)

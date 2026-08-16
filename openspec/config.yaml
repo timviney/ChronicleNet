@@ -4,67 +4,88 @@ context: |
   Project: ChronicleNet
 
   ChronicleNet is an experimental C#/.NET implementation inspired by
-  OpenHFT Chronicle Queue. It is intended as a learning and portfolio
-  project exploring low-latency messaging, persistence, concurrency,
-  binary serialization, memory-mapped files, and event replay.
+  OpenHFT Chronicle Queue. It is a learning and portfolio project
+  exploring low-latency messaging, persistence, concurrency, binary
+  serialization, memory-mapped-style I/O, and event replay.
 
-  The project is NOT intended to be a production-ready replacement
-  for Chronicle Queue and must not make unsupported claims about
-  performance or correctness.
+  The project is NOT a production-ready replacement for Chronicle Queue
+  and must not make unsupported claims about performance or correctness.
+  Chronicle Queue is an architectural reference, not a specification
+  requiring a line-for-line port.
+
+  The detailed project plan, including design rationale and trade-offs,
+  lives in docs/plan.md. Keep that file and this context in sync when
+  decisions change.
 
   Technology:
-  - Modern C#
-  - Modern .NET
+  - Modern C# / .NET (net10.0)
   - xUnit for testing
   - BenchmarkDotNet for performance benchmarks
   - Rider as the primary IDE
 
   Engineering priorities:
-  - Correctness before optimization
-  - Explicit, measurable performance characteristics
+  - Correctness before optimization; benchmark rather than assume
+  - Explicit, measurable performance characteristics (p50/p99/p99.9, not means)
   - Low allocations on hot paths where practical
   - Predictable latency
   - Clear separation between the public API and implementation details
   - Strong automated test coverage
-  - Benchmark performance rather than assuming an optimization is beneficial
+  - Simple implementations first: no unsafe code, lock-free algorithms,
+    or custom memory management unless a measurement justifies them
+  - Producer-centric: never push back on the writer; readers fall behind
+  - Document the reasoning and trade-offs behind design decisions
+
+  Architecture decisions (see docs/plan.md for full rationale):
+  - Record framing: size-prefixed blob; 4-byte little-endian header with
+    bit 31 = write-in-progress (NOT_COMPLETE), bit 30 = META_DATA, 30-bit
+    length; 4-byte record alignment; per-file magic + format version header
+  - Commit protocol: claim (header = WIP|len) -> payload -> ordered commit
+    (clear WIP). The framing is the crash-recovery mechanism; recovery is
+    scan-to-first-incomplete + truncate and lands in a later phase
+  - Files: one directory per queue; daily UTC roll yyyyMMdd.cnq with an
+    end-of-data mark at roll; TimeProvider seam for the clock; restart
+    same-day resumes by scanning to end of file; never write past an
+    end-of-data mark (clock-backwards rule)
+  - Index: 64-bit (cycle << 32) | sequence-in-day, cycle = days since epoch
+  - Storage: narrow physical seam (span read/write at offset, length, flush);
+    v1 implementation = FileStream + System.IO.RandomAccess positional I/O;
+    a memory-mapped implementation is a later, benchmarked alternative
+  - Writers: single-writer lock; appenders not thread-safe by contract.
+    A lock-free reservation-based multi-producer writer is a deferred
+    experiment to be paired with the mmap substrate and benchmarked
+  - Readers (tailers): independent cursors, positional reads, lock-free;
+    every tailer sees every message; reading never mutates the log;
+    a WIP header means "not present", never read past it
+  - Durability: OS page cache by default (survives process death, NOT
+    power loss or OS crash); an explicit flush-to-disk option is a later,
+    measured addition; never overstate durability; no network filesystems
+  - API: sync-first, span-based, zero-allocation hot paths; payloads are
+    opaque bytes; serialization is a layer above the queue
+  - Total ordering within a queue; no ordering guarantees across queues
+
+  Deliberate deferrals (do not build these without a new change proposal):
+  cross-process readers/writers, flush-to-disk options, per-record CRC,
+  named tailers / persisted checkpoints, index structures (offset tables),
+  retention/deletion of old files, size-based rolling, self-describing
+  payloads / schema evolution, typed method-writer/reader proxies, async
+  hot-path APIs, unsafe code, lock-free writer algorithms.
+
+  Roadmap:
+  1. Core framing + persisted append/read (commit protocol included)
+  2. Clean Appender / Tailer API
+  3. Binary serialization helpers
+  4. Multiple readers + positioning
+  5. Memory-mapped storage substrate (benchmarked vs RandomAccess)
+  6. Crash recovery scanner
+  7. Replay
+  8. Concurrency hardening (+ optional lock-free writer experiment)
+  9. Allocation optimisation (measured)
+  10. Benchmark suite
+  11. Trading demonstration
 
   Trading domain:
   The project will include a small simulated trading environment to
   demonstrate the queue with market-data events, trading strategies,
-  orders, and event replay.
-
-  This trading environment is a demonstration and test harness only.
-  It must not be presented as a real trading system.
-
-  Design philosophy:
-  Prefer simple implementations initially. Do not introduce unsafe code,
-  lock-free algorithms, custom memory management, or other low-level
-  optimizations unless there is a measurable reason to do so.
-
-  Chronicle Queue should be treated as an architectural reference,
-  not as a specification requiring a line-for-line port.
-
-  When making design decisions, document the reasoning and trade-offs.
-  
-  Then project plan is:
-  1. Basic persisted append/read
-            ↓
-  2. Clean Appender / Tailer API
-            ↓
-  3. Binary serialization
-            ↓
-  4. Multiple readers
-            ↓
-  5. Memory-mapped storage
-            ↓
-  6. Crash recovery
-            ↓
-  7. Replay
-            ↓
-  8. Concurrency
-            ↓
-  9. Allocation optimisation
-            ↓
-  10. Benchmarks
-            ↓
-  11. Trading demonstration
+  orders, and event replay. This trading environment is a demonstration
+  and test harness only. It must not be presented as a real trading
+  system.
