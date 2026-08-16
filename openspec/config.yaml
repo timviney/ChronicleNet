@@ -1,0 +1,70 @@
+schema: spec-driven
+
+context: |
+  Project: ChronicleNet
+
+  ChronicleNet is an experimental C#/.NET implementation inspired by
+  OpenHFT Chronicle Queue. It is intended as a learning and portfolio
+  project exploring low-latency messaging, persistence, concurrency,
+  binary serialization, memory-mapped files, and event replay.
+
+  The project is NOT intended to be a production-ready replacement
+  for Chronicle Queue and must not make unsupported claims about
+  performance or correctness.
+
+  Technology:
+  - Modern C#
+  - Modern .NET
+  - xUnit for testing
+  - BenchmarkDotNet for performance benchmarks
+  - Rider as the primary IDE
+
+  Engineering priorities:
+  - Correctness before optimization
+  - Explicit, measurable performance characteristics
+  - Low allocations on hot paths where practical
+  - Predictable latency
+  - Clear separation between the public API and implementation details
+  - Strong automated test coverage
+  - Benchmark performance rather than assuming an optimization is beneficial
+
+  Trading domain:
+  The project will include a small simulated trading environment to
+  demonstrate the queue with market-data events, trading strategies,
+  orders, and event replay.
+
+  This trading environment is a demonstration and test harness only.
+  It must not be presented as a real trading system.
+
+  Design philosophy:
+  Prefer simple implementations initially. Do not introduce unsafe code,
+  lock-free algorithms, custom memory management, or other low-level
+  optimizations unless there is a measurable reason to do so.
+
+  Chronicle Queue should be treated as an architectural reference,
+  not as a specification requiring a line-for-line port.
+
+  When making design decisions, document the reasoning and trade-offs.
+  
+  Then project plan is:
+  1. Basic persisted append/read
+            ↓
+  2. Clean Appender / Tailer API
+            ↓
+  3. Binary serialization
+            ↓
+  4. Multiple readers
+            ↓
+  5. Memory-mapped storage
+            ↓
+  6. Crash recovery
+            ↓
+  7. Replay
+            ↓
+  8. Concurrency
+            ↓
+  9. Allocation optimisation
+            ↓
+  10. Benchmarks
+            ↓
+  11. Trading demonstration

@@ -473,3 +473,7 @@ Thumbs.db
 # Temporary files
 *.tmp
 *.temp
+
+# OpenSpec
+.opencode
+.opencode/*
