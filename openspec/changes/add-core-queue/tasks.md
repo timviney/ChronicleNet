@@ -10,9 +10,9 @@
 
 ## 2. Storage seam and RandomAccess implementation
 
-- [ ] 2.1 Define the internal storage seam (`WriteAt` / `ReadAt` / `Length` / `Flush`)
+- [x] 2.1 Define the internal storage seam (`WriteAt` / `ReadAt` / `Length` / `Flush`)
   per design D5
-- [ ] 2.2 Implement the seam over one `FileStream` (`FileShare.ReadWrite`) using
+- [x] 2.2 Implement the seam over one `FileStream` (`FileShare.ReadWrite`) using
   `System.IO.RandomAccess`, with chunked pre-grow (default 64 MB, configurable)
 
 ## 3. Segment (day) file

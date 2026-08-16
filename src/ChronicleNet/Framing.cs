@@ -4,13 +4,13 @@ internal static class Framing
 {
     public const int HeaderLength = 4;
 
-    public const int NotComplete = unchecked((int)0x8000_0000);
-    public const int MetaData = unchecked((int)0x4000_0000);
-    public const int LengthMask = 0x3FFF_FFFF;
+    public const int NotComplete = unchecked((int)0x8000_0000); // bit 31 is reserved for not complete flag
+    public const int MetaData = unchecked((int)0x4000_0000); // bit 30 is reserved for metadata flag
+    public const int LengthMask = 0x3FFF_FFFF; // keep lower 30 bits for length
 
     public const int EndOfData = NotComplete | MetaData;
 
-    public const int MaxPayloadLength = LengthMask;
+    public const int MaxPayloadLength = LengthMask; // ie never go above 30 bits to avoid conflicting with flags above
 
     public const int Alignment = 4;
 
