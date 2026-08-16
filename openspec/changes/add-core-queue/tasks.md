@@ -25,11 +25,11 @@
 
 ## 4. Appender
 
-- [ ] 4.1 Implement `Append(ReadOnlySpan<byte>) → long index`: payload length validation
+- [x] 4.1 Implement `Append(ReadOnlySpan<byte>) → long index`: payload length validation
   (1 … 2³⁰−1), claim+payload write, 4-byte commit write, index assignment
   (`(cycle << 32) | sequence`)
-- [ ] 4.2 Serialize all appends through the queue's single-writer lock
-- [ ] 4.3 Roll on UTC day change via injected `TimeProvider`: write end-of-data mark,
+- [x] 4.2 Serialize all appends through the queue's single-writer lock
+- [x] 4.3 Roll on UTC day change via injected `TimeProvider`: write end-of-data mark,
   open next day's segment; clamp on clock-backwards (design D7)
 
 ## 5. Tailer

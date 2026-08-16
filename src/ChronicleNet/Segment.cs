@@ -31,11 +31,18 @@ internal sealed class Segment : IDisposable
     public static string GetPath(string directory, int cycle)
         => Path.Combine(directory, GetFileName(cycle));
 
-    public static Segment Create(string directory, int cycle)
+    // Days since the Unix epoch (matches the header's `cycle` field and the spec:
+    // `cycle = days since Unix epoch`). Design D7's `DateOnly.DayNumber` is a bug —
+    // DayNumber counts days since 0001-01-01, not 1970-01-01.
+    public static int CycleFor(DateTime utcDateTime)
+        => DateOnly.FromDateTime(utcDateTime).DayNumber
+         - DateOnly.FromDateTime(DateTime.UnixEpoch).DayNumber;
+
+    public static Segment Create(string directory, int cycle, long preGrowChunkSize)
     {
         string path = GetPath(directory, cycle);
         var stream = new FileStream(path, FileMode.CreateNew, FileAccess.ReadWrite, FileShare.ReadWrite);
-        var storage = new RandomAccessStorage(stream);
+        var storage = new RandomAccessStorage(stream, preGrowChunkSize);
 
         Span<byte> header = stackalloc byte[FileHeader.Length]; // no heap!
         FileHeader.Write(header, cycle);
@@ -44,11 +51,10 @@ internal sealed class Segment : IDisposable
         return new Segment(storage, cycle, FileHeader.Length, 0);
     }
 
-    public static Segment Open(string directory, int cycle)
+    public static Segment Open(string path, long preGrowChunkSize)
     {
-        string path = GetPath(directory, cycle);
         var stream = new FileStream(path, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite);
-        var storage = new RandomAccessStorage(stream);
+        var storage = new RandomAccessStorage(stream, preGrowChunkSize);
 
         Span<byte> header = stackalloc byte[FileHeader.Length];
         int read = storage.ReadAt(0, header);
@@ -60,15 +66,25 @@ internal sealed class Segment : IDisposable
 
         FileHeader.Validate(header);
 
-        int fileCycle = FileHeader.ReadCycle(header);
-        if (fileCycle != cycle)
-        {
-            storage.Dispose();
-            throw new QueueFormatException($"Cycle mismatch: file holds {fileCycle}, expected {cycle}.");
-        }
+        // The cycle lives in the header, so a file is readable by path alone
+        // without trusting its filename (self-describing, per the spec).
+        int cycle = FileHeader.ReadCycle(header);
 
         (long writePosition, int recordCount) = Scan(storage);
         return new Segment(storage, cycle, writePosition, recordCount);
+    }
+
+    public void Advance(int payloadLength)
+    {
+        WritePosition += Framing.AlignedRecordLength(payloadLength);
+        RecordCount++;
+    }
+
+    public void Seal()
+    {
+        Span<byte> header = stackalloc byte[Framing.HeaderLength];
+        Framing.WriteHeader(header, Framing.EndOfData);
+        _storage.WriteAt(WritePosition, header);
     }
 
     public void Dispose() => _storage.Dispose();
