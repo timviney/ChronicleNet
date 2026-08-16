@@ -4,8 +4,8 @@
 
 - [x] 1.1 Add internal framing constants (`NotComplete`, `MetaData`, `LengthMask`,
   `EndOfData` mark, max payload length) and header encode/decode helpers
-  (little-endian via `BinaryPrimitives`)
-- [ ] 1.2 Add alignment helper (4-byte record alignment: padded record length from
+  (little-endian, done with manual bitwise shifts/masks rather than `BinaryPrimitives`)
+- [x] 1.2 Add alignment helper (4-byte record alignment: padded record length from
   payload length)
 
 ## 2. Storage seam and RandomAccess implementation

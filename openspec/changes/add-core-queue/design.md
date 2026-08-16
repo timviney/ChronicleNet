@@ -65,6 +65,9 @@ Each day file (`yyyyMMdd.cnq`, UTC) is self-describing:
   verify the file belongs to the expected day.
 - Constants mirror Chronicle's `Wires.java` semantics deliberately — proven design, and
   the end-of-data mark is exactly Chronicle's `END_OF_DATA`.
+- Header encode/decode is written with explicit bitwise shifts and masks rather than
+  `BinaryPrimitives` — the on-disk little-endian layout is unchanged, but the manual form
+  keeps the byte layout visible for learning.
 
 ### D2 — Commit protocol over positional I/O (two writes per append)
 

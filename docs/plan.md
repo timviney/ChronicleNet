@@ -50,7 +50,9 @@ blob with a commit bit** (Chronicle's "Size-Prefixed Blob", verified against
 
 Decisions baked into the format from day one:
 
-- **Little-endian** everywhere, documented.
+- **Little-endian** everywhere, documented. Header encode/decode is written with
+  explicit bitwise shifts and masks rather than `BinaryPrimitives` — the on-disk layout
+  is unchanged, but the manual form keeps the byte layout visible for learning.
 - **4-byte record alignment** — every header starts at a 4-byte-aligned offset (≤3 padding
   bytes per record). This keeps a future in-place `Interlocked.CompareExchange` on headers
   possible without a format migration.
