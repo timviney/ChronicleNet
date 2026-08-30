@@ -31,6 +31,11 @@ internal sealed class Segment : IDisposable
     public static string GetPath(string directory, int cycle)
         => Path.Combine(directory, GetFileName(cycle));
 
+    // Days since the Unix epoch
+    public static int CycleFor(DateTime utcDateTime)
+        => DateOnly.FromDateTime(utcDateTime).DayNumber
+         - DateOnly.FromDateTime(DateTime.UnixEpoch).DayNumber;
+
     public static Segment Create(string directory, int cycle)
     {
         string path = GetPath(directory, cycle);
@@ -44,9 +49,8 @@ internal sealed class Segment : IDisposable
         return new Segment(storage, cycle, FileHeader.Length, 0);
     }
 
-    public static Segment Open(string directory, int cycle)
+    public static Segment Open(string path)
     {
-        string path = GetPath(directory, cycle);
         var stream = new FileStream(path, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite);
         var storage = new RandomAccessStorage(stream);
 
@@ -60,15 +64,23 @@ internal sealed class Segment : IDisposable
 
         FileHeader.Validate(header);
 
-        int fileCycle = FileHeader.ReadCycle(header);
-        if (fileCycle != cycle)
-        {
-            storage.Dispose();
-            throw new QueueFormatException($"Cycle mismatch: file holds {fileCycle}, expected {cycle}.");
-        }
+        int cycle = FileHeader.ReadCycle(header);
 
         (long writePosition, int recordCount) = Scan(storage);
         return new Segment(storage, cycle, writePosition, recordCount);
+    }
+
+    public void Advance(int payloadLength)
+    {
+        WritePosition += Framing.AlignedRecordLength(payloadLength);
+        RecordCount++;
+    }
+
+    public void Seal()
+    {
+        Span<byte> header = stackalloc byte[Framing.HeaderLength];
+        Framing.WriteHeader(header, Framing.EndOfData);
+        _storage.WriteAt(WritePosition, header);
     }
 
     public void Dispose() => _storage.Dispose();
