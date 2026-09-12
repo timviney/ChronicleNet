@@ -62,7 +62,7 @@
   to the active file
 - [x] 7.6 Restart resume: reopen same day preserves records and continues sequence;
   fabricated WIP tail is superseded by the next append after reopen
-- [ ] 7.7 Multi-tailer independence: two tailers from different positions each see every
+- [x] 7.7 Multi-tailer independence: two tailers from different positions each see every
   record; reading while writing reports not-present then observes the new record
 - [ ] 7.8 Concurrent appends from multiple threads yield all records exactly once in a
   valid total order
