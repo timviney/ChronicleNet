@@ -38,7 +38,7 @@
 - [x] 5.2 Implement `TryRead(out ReadOnlySpan<byte>)` with poll semantics: zero/WIP/
   implausible header → not present; end-of-data mark → follow to next day's file when
   it exists; complete record → span over pooled buffer, valid until next read
-- [ ] 5.3 Expose `CurrentIndex`; document span lifetime in XML docs
+- [x] 5.3 Expose `CurrentIndex`; document span lifetime in XML docs
 
 ## 6. Queue
 

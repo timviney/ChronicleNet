@@ -7,6 +7,9 @@ public sealed class Tailer(ChronicleQueue queue, int initialBufferSize = 4096) :
     // tailers, so each tailer owns its own copy of this position.
     private int _cycle;
     private long _offset;
+    
+    private int _sequence;
+    private long _index = -1;
 
     private IStorage? _storage;
     private int _storageCycle;
@@ -17,16 +20,32 @@ public sealed class Tailer(ChronicleQueue queue, int initialBufferSize = 4096) :
 
     internal long Offset => _offset;
 
-    /// <summary>Positions the cursor at the first record of the earliest day file.</summary>
+    /// <summary>
+    /// The index (<c>(cycle &lt;&lt; 32) | sequence-in-day</c>) of the record returned by the
+    /// most recent successful <see cref="TryRead"/>, or -1 if no record has been read since
+    /// the cursor was last positioned with <see cref="ToStart"/> or <see cref="ToEnd"/>.
+    /// A failed <see cref="TryRead"/> leaves this unchanged.
+    /// </summary>
+    public long CurrentIndex => _index;
+
+    /// <summary>
+    /// Positions the cursor at the first record of the earliest day file. Resets
+    /// <see cref="CurrentIndex"/> to -1 until a record is read.
+    /// </summary>
     public void ToStart()
     {
         queue.ThrowIfDisposed();
 
         _cycle = queue.EarliestCycle();
         _offset = FileHeader.Length;
+        _sequence = 0;
+        _index = -1;
     }
 
-    /// <summary>Positions the cursor at the current write position, seeing only later records.</summary>
+    /// <summary>
+    /// Positions the cursor at the current write position, seeing only later records.
+    /// Resets <see cref="CurrentIndex"/> to -1 until a record is read.
+    /// </summary>
     public void ToEnd()
     {
         queue.ThrowIfDisposed();
@@ -34,6 +53,8 @@ public sealed class Tailer(ChronicleQueue queue, int initialBufferSize = 4096) :
         Segment active = queue.ActiveSegment;
         _cycle = active.Cycle;
         _offset = active.WritePosition;
+        _sequence = active.RecordCount;
+        _index = -1;
     }
 
     /// <summary>
@@ -107,6 +128,8 @@ public sealed class Tailer(ChronicleQueue queue, int initialBufferSize = 4096) :
                 return false;
             }
 
+            _index = ((long)_cycle << 32) | (uint)_sequence;
+            _sequence++;
             _offset += Framing.AlignedRecordLength(length);
             payload = buffer;
             return true;
@@ -153,6 +176,7 @@ public sealed class Tailer(ChronicleQueue queue, int initialBufferSize = 4096) :
 
         _cycle = next;
         _offset = FileHeader.Length;
+        _sequence = 0; // sequence-in-day restarts in the new file
         return true;
     }
 }
