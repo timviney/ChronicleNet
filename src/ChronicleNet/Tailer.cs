@@ -2,9 +2,8 @@ namespace ChronicleNet;
 
 public sealed class Tailer(ChronicleQueue queue, int initialBufferSize = 4096) : IDisposable
 {
-    // Independent cursor: the day file being read and the byte offset within it.
-    // Reading never mutates the log and never coordinates with the writer or other
-    // tailers, so each tailer owns its own copy of this position.
+    // Independent cursor: (cycle, offset). Reading never mutates the log and never
+    // coordinates with the writer or other tailers.
     private int _cycle;
     private long _offset;
     
@@ -21,10 +20,9 @@ public sealed class Tailer(ChronicleQueue queue, int initialBufferSize = 4096) :
     internal long Offset => _offset;
 
     /// <summary>
-    /// The index (<c>(cycle &lt;&lt; 32) | sequence-in-day</c>) of the record returned by the
-    /// most recent successful <see cref="TryRead"/>, or -1 if no record has been read since
-    /// the cursor was last positioned with <see cref="ToStart"/> or <see cref="ToEnd"/>.
-    /// A failed <see cref="TryRead"/> leaves this unchanged.
+    /// Index (<c>(cycle &lt;&lt; 32) | sequence-in-day</c>) of the most recent successful
+    /// <see cref="TryRead"/>, or -1 if none has been read since the cursor was positioned.
+    /// A failed read leaves it unchanged.
     /// </summary>
     public long CurrentIndex => _index;
 
@@ -151,8 +149,7 @@ public sealed class Tailer(ChronicleQueue queue, int initialBufferSize = 4096) :
         _disposed = true;
     }
 
-    // The cursor only ever sits on one day file at a time, so one cached handle is
-    // enough; it is swapped out when the cursor moves to another cycle.
+    // The cursor sits on one day file at a time, so a single cached handle is enough.
     private IStorage? StorageForCurrentCycle()
     {
         if (_storage is not null && _storageCycle == _cycle)

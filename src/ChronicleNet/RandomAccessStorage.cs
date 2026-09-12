@@ -4,15 +4,12 @@ namespace ChronicleNet;
 
 internal sealed class RandomAccessStorage(
     FileStream stream,
-    long preGrowChunkSize = RandomAccessStorage.DefaultPreGrowChunkSize)
+    long preGrowChunkSize = QueueOptions.DefaultPreGrowChunkSize)
     : IStorage
 {
-    public const long DefaultPreGrowChunkSize = 64L * 1024 * 1024;
-
     private readonly SafeFileHandle _handle = stream.SafeFileHandle;
 
-    // Read-only handle for tailers: FileShare.ReadWrite lets the single writer keep
-    // its own handle open while readers follow the same file.
+    // Read-only handle for tailers; FileShare.ReadWrite lets the writer keep its handle open too.
     public static RandomAccessStorage OpenRead(string path)
     {
         var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
@@ -29,7 +26,7 @@ internal sealed class RandomAccessStorage(
 
     /// <returns>the number of bytes read</returns>
     public int ReadAt(long offset, Span<byte> buffer)
-        => RandomAccess.Read(_handle, buffer, offset); // buffer.Length defines the maximum number of bytes to read
+        => RandomAccess.Read(_handle, buffer, offset);
 
     // Flushes to the OS, but not to disk. This is because we don't want to block the writer thread on disk flushes,
     // which can be slow. The OS will eventually flush to disk on its own.

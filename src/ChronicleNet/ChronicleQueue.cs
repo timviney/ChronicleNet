@@ -7,6 +7,12 @@ public sealed class ChronicleQueue : IDisposable
         ArgumentException.ThrowIfNullOrWhiteSpace(directory);
 
         QueueOptions resolved = options ?? new QueueOptions();
+        if (resolved.PreGrowChunkSize <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(options), resolved.PreGrowChunkSize,
+                $"{nameof(QueueOptions.PreGrowChunkSize)} must be greater than zero.");
+        }
+
         Directory.CreateDirectory(directory);
 
         return new ChronicleQueue(directory, resolved);
@@ -14,6 +20,7 @@ public sealed class ChronicleQueue : IDisposable
     
     private readonly string _directory;
     private readonly TimeProvider _timeProvider;
+    private readonly long _preGrowChunkSize;
     private readonly List<Tailer> _tailers = [];
     private bool _disposed;
 
@@ -21,6 +28,7 @@ public sealed class ChronicleQueue : IDisposable
     {
         _directory = directory;
         _timeProvider = options.TimeProvider;
+        _preGrowChunkSize = options.PreGrowChunkSize;
         ActiveSegment = OpenActiveSegment();
     }
 
@@ -56,7 +64,7 @@ public sealed class ChronicleQueue : IDisposable
     {
         ActiveSegment.Seal();
         ActiveSegment.Dispose();
-        ActiveSegment = Segment.Create(_directory, cycle);
+        ActiveSegment = Segment.Create(_directory, cycle, _preGrowChunkSize);
     }
 
     private Segment OpenActiveSegment()
@@ -70,15 +78,13 @@ public sealed class ChronicleQueue : IDisposable
             .MaxBy(Path.GetFileName);
 
         return latest is null
-            ? Segment.Create(_directory, currentCycle)
-            : Segment.Open(latest);
+            ? Segment.Create(_directory, currentCycle, _preGrowChunkSize)
+            : Segment.Open(latest, _preGrowChunkSize);
     }
     
-    // The earliest day file in the directory is the lexicographic minimum, since
-    // yyyyMMdd.cnq sorts chronologically. Falls back to the active segment if the
-    // directory has no files yet.
     internal int EarliestCycle()
     {
+        // yyyyMMdd.cnq sorts chronologically, so the minimum name is the earliest day file.
         string? earliest = Directory
             .GetFiles(_directory, "*" + Segment.Extension)
             .MinBy(Path.GetFileName);

@@ -37,28 +37,27 @@ internal sealed class Segment : IDisposable
         => DateOnly.FromDateTime(utcDateTime).DayNumber
          - UnixEpochDayNumber;
 
-    // Recovers the cycle from a segment file name (yyyyMMdd.cnq)
     public static int CycleForFileName(string path)
         => DateOnly.ParseExact(Path.GetFileNameWithoutExtension(path), "yyyyMMdd", CultureInfo.InvariantCulture).DayNumber
          - UnixEpochDayNumber;
 
-    public static Segment Create(string directory, int cycle)
+    public static Segment Create(string directory, int cycle, long preGrowChunkSize)
     {
         string path = GetPath(directory, cycle);
         var stream = new FileStream(path, FileMode.CreateNew, FileAccess.ReadWrite, FileShare.ReadWrite);
-        var storage = new RandomAccessStorage(stream);
+        var storage = new RandomAccessStorage(stream, preGrowChunkSize);
 
-        Span<byte> header = stackalloc byte[FileHeader.Length]; // no heap!
+        Span<byte> header = stackalloc byte[FileHeader.Length];
         FileHeader.Write(header, cycle);
         storage.WriteAt(0, header);
 
         return new Segment(storage, cycle, FileHeader.Length, 0);
     }
 
-    public static Segment Open(string path)
+    public static Segment Open(string path, long preGrowChunkSize)
     {
         var stream = new FileStream(path, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite);
-        var storage = new RandomAccessStorage(stream);
+        var storage = new RandomAccessStorage(stream, preGrowChunkSize);
 
         Span<byte> header = stackalloc byte[FileHeader.Length];
         int read = storage.ReadAt(0, header);

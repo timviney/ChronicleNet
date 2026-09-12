@@ -4,9 +4,9 @@ internal static class Framing
 {
     public const int HeaderLength = 4;
 
-    public const int NotComplete = unchecked((int)0x8000_0000); // bit 31 is reserved for not complete flag
-    public const int MetaData = 0x4000_0000; // bit 30 is reserved for metadata flag
-    public const int LengthMask = 0x3FFF_FFFF; // keep lower 30 bits for length
+    public const int NotComplete = unchecked((int)0x8000_0000); // bit 31: write in progress
+    public const int MetaData = 0x4000_0000;                    // bit 30: metadata / end-of-data
+    public const int LengthMask = 0x3FFF_FFFF;                  // bits 0..29: payload length
 
     public const int EndOfData = NotComplete | MetaData;
 
@@ -36,10 +36,7 @@ internal static class Framing
         destination[3] = (byte)(header >> 24);  // bits 24..31
     }
 
-    // Decodes the header by reversing the layout above: each byte is shifted
-    // left back to its original bit position and combined with OR. Byte 0 stays
-    // put, byte 1 moves up 8 bits, and so on. The top bit of byte 3 becomes the
-    // sign bit (bit 31), so the result is the original int32.
+    // Reverse of WriteHeader: reassemble the int32 from least- to most-significant byte.
     public static int ReadHeader(ReadOnlySpan<byte> source)
     {
         return source[0]

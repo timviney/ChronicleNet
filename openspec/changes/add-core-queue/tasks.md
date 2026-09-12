@@ -44,7 +44,7 @@
 
 - [x] 6.1 Implement `Queue` open/create over a directory, `CreateAppender()` /
   `CreateTailer()`, writer lock, day-file handle management, `IDisposable`
-- [ ] 6.2 Add `QueueOptions` (TimeProvider, pre-grow chunk size) with documented defaults
+- [x] 6.2 Add `QueueOptions` (TimeProvider, pre-grow chunk size) with documented defaults
 - [ ] 6.3 Document the durability boundary (survives process death, not power loss) in
   public API docs
 
