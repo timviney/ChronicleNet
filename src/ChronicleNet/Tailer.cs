@@ -58,10 +58,18 @@ public sealed class Tailer(ChronicleQueue queue, int initialBufferSize = 4096) :
     }
 
     /// <summary>
-    /// Reads the next committed record, if one is present. Returns false rather than
-    /// blocking or throwing when the cursor is at the end of the data, at a write-in-progress
-    /// record, or at an implausible header. The returned span is valid only until the next read.
+    /// Reads the next committed record, if one is present, without blocking.
     /// </summary>
+    /// <param name="payload">
+    /// The record's payload. This is a view over an internal reusable buffer and is valid
+    /// only until the next call to <see cref="TryRead"/> on this tailer. Copy it if it must
+    /// outlive that call.
+    /// </param>
+    /// <returns>
+    /// <c>true</c> when a committed record was read; <c>false</c> when the cursor is at the
+    /// end of the data, at a write-in-progress (or otherwise unreadable) record, or at an
+    /// implausible header.
+    /// </returns>
     public bool TryRead(out ReadOnlySpan<byte> payload)
     {
         queue.ThrowIfDisposed();

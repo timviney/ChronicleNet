@@ -14,6 +14,7 @@ public sealed class ChronicleQueue : IDisposable
     
     private readonly string _directory;
     private readonly TimeProvider _timeProvider;
+    private readonly List<Tailer> _tailers = [];
     private bool _disposed;
 
     private ChronicleQueue(string directory, QueueOptions options)
@@ -32,6 +33,23 @@ public sealed class ChronicleQueue : IDisposable
     {
         ThrowIfDisposed();
         return new Appender(this);
+    }
+
+    /// <summary>
+    /// Creates an independent read cursor over this queue. The queue owns the tailer
+    /// and disposes it (releasing its file handle) when the queue is disposed, so
+    /// callers do not need to dispose tailers explicitly.
+    /// </summary>
+    public Tailer CreateTailer()
+    {
+        lock (WriteLock)
+        {
+            ThrowIfDisposed();
+
+            var tailer = new Tailer(this);
+            _tailers.Add(tailer);
+            return tailer;
+        }
     }
     
     internal void RollTo(int cycle)
@@ -85,6 +103,13 @@ public sealed class ChronicleQueue : IDisposable
             }
 
             _disposed = true;
+
+            foreach (Tailer tailer in _tailers)
+            {
+                tailer.Dispose();
+            }
+            _tailers.Clear();
+
             ActiveSegment.Dispose();
         }
     }
