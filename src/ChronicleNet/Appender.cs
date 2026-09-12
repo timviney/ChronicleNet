@@ -4,6 +4,11 @@ public sealed class Appender(ChronicleQueue queue, int initialBufferSize = 4096)
 {
     private readonly ReusableBuffer _buffer = new(initialBufferSize); // Reusable buffer for writing records
     
+    /// <summary>
+    /// Appends one record and returns its 64-bit index. Once this returns, the record is
+    /// readable by tailers in this process and survives the process terminating; it is not
+    /// guaranteed to survive an OS crash or power loss (see <see cref="ChronicleQueue"/>).
+    /// </summary>
     public long Append(ReadOnlySpan<byte> payload) // Example: payload = "hello" => [68 65 6c 6c 6f]
     {
         switch (payload.Length)

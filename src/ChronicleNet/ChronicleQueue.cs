@@ -1,5 +1,15 @@
 namespace ChronicleNet;
 
+/// <summary>
+/// A single-process, single-writer, many-reader append-only queue persisted to daily
+/// <c>yyyyMMdd.cnq</c> files.
+/// <para>
+/// Durability: an append that has returned sits in the OS page cache. It is readable by
+/// tailers in this process and survives the writing process terminating, but it is
+/// <b>not</b> guaranteed to survive an OS crash or power loss — no flush-to-disk is
+/// performed. Network filesystems are not supported.
+/// </para>
+/// </summary>
 public sealed class ChronicleQueue : IDisposable
 {
     public static ChronicleQueue Open(string directory, QueueOptions? options = null)
