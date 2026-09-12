@@ -28,10 +28,6 @@ internal sealed class RandomAccessStorage(
     public int ReadAt(long offset, Span<byte> buffer)
         => RandomAccess.Read(_handle, buffer, offset);
 
-    // Flushes to the OS, but not to disk. This is because we don't want to block the writer thread on disk flushes,
-    // which can be slow. The OS will eventually flush to disk on its own.
-    public void Flush() => stream.Flush(flushToDisk: false);
-
     public void Dispose() => stream.Dispose();
 
     private void EnsureCapacity(long requiredLength)

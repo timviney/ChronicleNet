@@ -161,7 +161,7 @@ implementation can be swapped in later and benchmarked head-to-head:
   Shared logic    framing, commit protocol, roll, recovery scan
                   (written ONCE against the seam)
   ────────────────────────────────────────────────────────────
-  The seam        read/write span at offset · length · flush
+  The seam        read/write span at offset · length
                        │                    │
               ┌────────┴────────┐   ┌───────┴────────────┐
               │ RandomAccess    │   │ Memory-mapped      │  ← later, benchmarked

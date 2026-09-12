@@ -8,6 +8,4 @@ internal interface IStorage : IDisposable
     
     /// <returns>the number of bytes read</returns>
     int ReadAt(long offset, Span<byte> buffer);
-
-    void Flush();
 }

@@ -21,9 +21,6 @@ internal static class Framing
     public static int AlignedRecordLength(int payloadLength)
         => (payloadLength + HeaderLength + Alignment - 1) & ~(Alignment - 1);
 
-    public static int PaddingLength(int payloadLength)
-        => AlignedRecordLength(payloadLength) - HeaderLength - payloadLength;
-
     // Encodes the header as little-endian: the least-significant byte goes
     // first. Each byte is extracted by shifting the header right by a multiple
     // of 8 and truncating to the low 8 bits via the (byte) cast (the cast
