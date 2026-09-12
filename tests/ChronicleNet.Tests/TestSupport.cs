@@ -26,6 +26,14 @@ internal sealed class FakeTimeProvider(DateTimeOffset now) : TimeProvider
     public override DateTimeOffset GetUtcNow() => Now;
 }
 
+internal static class Format
+{
+    public const int FileHeaderLength = 16;
+    public const int NotComplete = unchecked((int)0x8000_0000);
+    public const int MetaData = 0x4000_0000;
+    public const int EndOfData = unchecked((int)0xC000_0000);
+}
+
 internal static class QueueFiles
 {
     public static string Single(string directory) => Directory.GetFiles(directory, "*.cnq").Single();
@@ -36,5 +44,17 @@ internal static class QueueFiles
         using var memory = new MemoryStream();
         stream.CopyTo(memory);
         return memory.ToArray();
+    }
+
+    // Overwrites a 4-byte little-endian record header, simulating a writer mid-append.
+    public static void PokeInt32(string path, long offset, int value)
+    {
+        using var stream = new FileStream(path, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite);
+        Span<byte> bytes = stackalloc byte[4];
+        bytes[0] = (byte)value;
+        bytes[1] = (byte)(value >> 8);
+        bytes[2] = (byte)(value >> 16);
+        bytes[3] = (byte)(value >> 24);
+        RandomAccess.Write(stream.SafeFileHandle, bytes, offset);
     }
 }

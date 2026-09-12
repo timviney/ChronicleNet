@@ -55,7 +55,7 @@
 - [x] 7.2 Round-trip: appended payloads read back in order; indexes assigned sequentially
   per day
 - [x] 7.3 Payload validation: empty and oversized appends rejected, queue unchanged
-- [ ] 7.4 WIP invisibility: a record with WIP set is never returned; commit makes it
+- [x] 7.4 WIP invisibility: a record with WIP set is never returned; commit makes it
   readable
 - [ ] 7.5 Roll tests with fake `TimeProvider`: midnight roll writes end-of-data mark and
   continues in new file; tailer follows across the roll; clock-backwards keeps appending
