@@ -66,7 +66,7 @@
   record; reading while writing reports not-present then observes the new record
 - [x] 7.8 Concurrent appends from multiple threads yield all records exactly once in a
   valid total order
-- [ ] 7.9 Fresh-handle read test: committed records readable through a newly opened file
+- [x] 7.9 Fresh-handle read test: committed records readable through a newly opened file
   handle without explicit flush
 
 ## 8. Verification
