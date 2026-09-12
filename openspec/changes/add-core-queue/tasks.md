@@ -72,4 +72,4 @@
 ## 8. Verification
 
 - [x] 8.1 `dotnet test` green; no third-party dependencies added to the core library
-- [ ] 8.2 Update README status line (project has entered active development)
+- [x] 8.2 Update README status line (project has entered active development)
