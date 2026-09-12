@@ -53,3 +53,31 @@ The eventual design will look roughly like:
         │ Order / Risk   │
         │    Engine      │
         └────────────────┘
+```
+
+## Performance (Phase 1 baseline)
+
+Indicative numbers from `benchmarks/ChronicleNet.Benchmarks`, measured on a laptop
+(Intel Core Ultra 9 185H, .NET 10, Release), 20,000 × 64-byte records per batch, 20 iterations.
+
+| Operation    | `Channel<T>`        | Raw `FileStream`    | ChronicleNet          |
+|--------------|--------------------:|--------------------:|----------------------:|
+| Write        | 18.8 ns/op (~53M/s) | 97 ns/op (~10M/s)   | 4,491 ns/op (~223k/s) |
+| Write + read | 23.2 ns/op (~43M/s) | —                   | 7,546 ns/op (~133k/s) |
+| Allocations  | 13 B/op             | 0 B/op              | 0 B/op                |
+
+**This is not apples-to-apples, and the queue is meant to look slower here.** Read it with
+the following in mind:
+
+- `Channel<T>` is in-memory, destructive (a read removes the item), and lost when the
+  process exits. It is the fastest possible handoff — and not what this library replaces.
+- The raw `FileStream` baseline is unframed, unflushed, and has no commit protocol; it
+  just copies bytes into a 4 KB buffer. It is neither crash-safe nor replayable.
+- ChronicleNet is persisted, crash-safe (claim → payload → commit framing), indexed,
+  replayable, and serves any number of independent, non-destructive readers. Phase 1's
+  `RandomAccess` substrate pays real syscalls (~2 writes) per append for that.
+- **Phase 5 (memory-mapped substrate)** replaces those syscalls with stores into a mapped
+  page and is expected to close most of the gap to the raw file — to be measured, not assumed.
+
+The queue's `0 B/op` confirms the zero-allocation hot-path goal. Reproduce with:
+`dotnet run -c Release --project benchmarks/ChronicleNet.Benchmarks`.

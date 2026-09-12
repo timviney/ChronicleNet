@@ -346,9 +346,10 @@ property of the framing), while the recovery *scanner* can wait for phase 6. The
   restart-resume tests; multi-tailer independence tests.
 - **Crash simulation**: write a record that stops after the claim (permanent WIP),
   reopen, verify readers stop there and (from phase 6) recovery truncates.
-- **Throughput benchmarks**: BenchmarkDotNet. The `benchmarks/ChronicleNet.Benchmarks`
-  project now references BenchmarkDotNet with baseline append/read benchmarks; the full
-  percentile suite lands in phase 10.
+- **Throughput benchmarks**: BenchmarkDotNet. `benchmarks/ChronicleNet.Benchmarks` has
+  baseline append/read benchmarks plus a comparison against `Channel<T>` and a raw
+  `FileStream` (Phase 1 numbers recorded in the README); the full percentile suite lands
+  in phase 10.
 - **Latency measurement**: `Stopwatch.GetTimestamp()` around append/read loops with a
   percentile histogram; report p50/p99/p99.9 — means lie for this kind of system.
 - **Attribution**: substrate comparisons run identical scenarios with the storage

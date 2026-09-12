@@ -1,17 +1,39 @@
+using System.Buffers.Binary;
 using System.Threading.Channels;
 using BenchmarkDotNet.Attributes;
+using BenchmarkDotNet.Configs;
+using BenchmarkDotNet.Diagnosers;
+using BenchmarkDotNet.Jobs;
 using ChronicleNet;
 
 namespace ChronicleNet.Benchmarks;
 
-// Rough throughput comparison against System.Threading.Channels.Channel.
+// Rough throughput comparison against System.Threading.Channels.Channel and a raw
+// (unframed, unflushed) FileStream append.
 //
-// This is not apples-to-apples: Channel is in-memory and destructive (a read removes the
-// item), while ChronicleNet is persisted and non-destructive (a tailer never consumes).
-// It answers "what does persistence cost?" rather than "which is better".
-public abstract class ChannelComparisonBase
+// This is not apples-to-apples. Channel is in-memory and destructive (a read removes the
+// item); the FileStream baseline keeps no commit protocol and never flushes; ChronicleNet
+// is persisted, crash-safe, and non-destructive (a tailer never consumes). It answers
+// "what do the persistence and framing guarantees cost?" rather than "which is better".
+public class ComparisonConfig : ManualConfig
 {
-    protected const int Count = 10_000;
+    public ComparisonConfig()
+    {
+        // InvocationCount = 1 so each measured iteration is exactly one isolated batch
+        // (state is recreated in IterationSetup); more warmup/iterations for a rounded score.
+        AddJob(Job.Default
+            .WithInvocationCount(1)
+            .WithUnrollFactor(1)
+            .WithWarmupCount(5)
+            .WithIterationCount(20)
+            .WithLaunchCount(1));
+        AddDiagnoser(MemoryDiagnoser.Default);
+    }
+}
+
+public abstract class ComparisonBase
+{
+    protected const int Count = 20_000;
 
     protected readonly byte[] Payload = new byte[64];
 
@@ -20,6 +42,7 @@ public abstract class ChannelComparisonBase
     protected Appender Appender = null!;
     protected Tailer Tailer = null!;
     protected Channel<byte[]> Items = null!;
+    protected FileStream RawLog = null!;
 
     [IterationSetup]
     public void Setup()
@@ -30,18 +53,20 @@ public abstract class ChannelComparisonBase
         Tailer = Queue.CreateTailer();
         Items = Channel.CreateUnbounded<byte[]>(
             new UnboundedChannelOptions { SingleReader = true, SingleWriter = true });
+        RawLog = new FileStream(Path.Combine(DirectoryPath, "raw.log"), FileMode.Create, FileAccess.Write, FileShare.Read);
     }
 
     [IterationCleanup]
     public void Cleanup()
     {
+        RawLog.Dispose();
         Queue.Dispose();
         Directory.Delete(DirectoryPath, recursive: true);
     }
 }
 
-[MemoryDiagnoser]
-public class WriteComparisonBenchmark : ChannelComparisonBase
+[Config(typeof(ComparisonConfig))]
+public class WriteComparisonBenchmark : ComparisonBase
 {
     [Benchmark(Baseline = true, OperationsPerInvoke = Count)]
     public int ChannelWrite()
@@ -49,6 +74,20 @@ public class WriteComparisonBenchmark : ChannelComparisonBase
         for (int i = 0; i < Count; i++)
         {
             Items.Writer.TryWrite(Payload);
+        }
+
+        return Count;
+    }
+
+    [Benchmark(OperationsPerInvoke = Count)]
+    public int FileStreamWrite()
+    {
+        Span<byte> header = stackalloc byte[4];
+        BinaryPrimitives.WriteInt32LittleEndian(header, Payload.Length);
+        for (int i = 0; i < Count; i++)
+        {
+            RawLog.Write(header);
+            RawLog.Write(Payload);
         }
 
         return Count;
@@ -66,8 +105,8 @@ public class WriteComparisonBenchmark : ChannelComparisonBase
     }
 }
 
-[MemoryDiagnoser]
-public class RoundTripComparisonBenchmark : ChannelComparisonBase
+[Config(typeof(ComparisonConfig))]
+public class RoundTripComparisonBenchmark : ComparisonBase
 {
     [Benchmark(Baseline = true, OperationsPerInvoke = Count)]
     public int ChannelRoundTrip()
