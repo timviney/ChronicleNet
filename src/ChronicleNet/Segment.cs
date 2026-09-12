@@ -4,6 +4,7 @@ namespace ChronicleNet;
 
 internal sealed class Segment : IDisposable
 {
+    private static readonly int UnixEpochDayNumber = DateOnly.FromDateTime(DateTime.UnixEpoch).DayNumber;
     public const string Extension = ".cnq";
 
     private readonly IStorage _storage;
@@ -34,7 +35,12 @@ internal sealed class Segment : IDisposable
     // Days since the Unix epoch
     public static int CycleFor(DateTime utcDateTime)
         => DateOnly.FromDateTime(utcDateTime).DayNumber
-         - DateOnly.FromDateTime(DateTime.UnixEpoch).DayNumber;
+         - UnixEpochDayNumber;
+
+    // Recovers the cycle from a segment file name (yyyyMMdd.cnq)
+    public static int CycleForFileName(string path)
+        => DateOnly.ParseExact(Path.GetFileNameWithoutExtension(path), "yyyyMMdd", CultureInfo.InvariantCulture).DayNumber
+         - UnixEpochDayNumber;
 
     public static Segment Create(string directory, int cycle)
     {

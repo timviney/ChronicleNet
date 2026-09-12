@@ -55,6 +55,20 @@ public sealed class ChronicleQueue : IDisposable
             : Segment.Open(latest);
     }
     
+    // The earliest day file in the directory is the lexicographic minimum, since
+    // yyyyMMdd.cnq sorts chronologically. Falls back to the active segment if the
+    // directory has no files yet.
+    internal int EarliestCycle()
+    {
+        string? earliest = Directory
+            .GetFiles(_directory, "*" + Segment.Extension)
+            .MinBy(Path.GetFileName);
+
+        return earliest is null
+            ? ActiveSegment.Cycle
+            : Segment.CycleForFileName(earliest);
+    }
+
     internal void ThrowIfDisposed()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);

@@ -34,7 +34,7 @@
 
 ## 5. Tailer
 
-- [ ] 5.1 Implement independent cursor (`cycle`, `offset`) with `ToStart()` / `ToEnd()`
+- [x] 5.1 Implement independent cursor (`cycle`, `offset`) with `ToStart()` / `ToEnd()`
 - [ ] 5.2 Implement `TryRead(out ReadOnlySpan<byte>)` with poll semantics: zero/WIP/
   implausible header → not present; end-of-data mark → follow to next day's file when
   it exists; complete record → span over pooled buffer, valid until next read
