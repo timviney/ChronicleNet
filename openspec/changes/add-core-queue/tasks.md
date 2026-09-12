@@ -54,7 +54,7 @@
   (file header, record headers, alignment padding)
 - [x] 7.2 Round-trip: appended payloads read back in order; indexes assigned sequentially
   per day
-- [ ] 7.3 Payload validation: empty and oversized appends rejected, queue unchanged
+- [x] 7.3 Payload validation: empty and oversized appends rejected, queue unchanged
 - [ ] 7.4 WIP invisibility: a record with WIP set is never returned; commit makes it
   readable
 - [ ] 7.5 Roll tests with fake `TimeProvider`: midnight roll writes end-of-data mark and
