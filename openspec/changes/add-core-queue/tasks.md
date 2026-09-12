@@ -60,7 +60,7 @@
 - [x] 7.5 Roll tests with fake `TimeProvider`: midnight roll writes end-of-data mark and
   continues in new file; tailer follows across the roll; clock-backwards keeps appending
   to the active file
-- [ ] 7.6 Restart resume: reopen same day preserves records and continues sequence;
+- [x] 7.6 Restart resume: reopen same day preserves records and continues sequence;
   fabricated WIP tail is superseded by the next append after reopen
 - [ ] 7.7 Multi-tailer independence: two tailers from different positions each see every
   record; reading while writing reports not-present then observes the new record
