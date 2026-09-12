@@ -11,6 +11,14 @@ internal sealed class RandomAccessStorage(
 
     private readonly SafeFileHandle _handle = stream.SafeFileHandle;
 
+    // Read-only handle for tailers: FileShare.ReadWrite lets the single writer keep
+    // its own handle open while readers follow the same file.
+    public static RandomAccessStorage OpenRead(string path)
+    {
+        var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+        return new RandomAccessStorage(stream);
+    }
+
     public long Length => RandomAccess.GetLength(_handle);
 
     public void WriteAt(long offset, ReadOnlySpan<byte> data)

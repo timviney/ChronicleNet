@@ -2,7 +2,7 @@ namespace ChronicleNet;
 
 public sealed class Appender(ChronicleQueue queue, int initialBufferSize = 4096)
 {
-    private byte[] _buffer = new byte[initialBufferSize]; // Reusable buffer for writing records
+    private readonly ReusableBuffer _buffer = new(initialBufferSize); // Reusable buffer for writing records
     
     public long Append(ReadOnlySpan<byte> payload) // Example: payload = "hello" => [68 65 6c 6c 6f]
     {
@@ -32,7 +32,7 @@ public sealed class Appender(ChronicleQueue queue, int initialBufferSize = 4096)
             long writePosition = segment.WritePosition;
             int sequence = segment.RecordCount;
             
-            var buffer = GetBuffer(paddedLength);
+            Span<byte> buffer = _buffer.Get(paddedLength);
 
             // Claim: header carries WIP | length; payload follows; padding is
             // zeroed so the on-disk bytes are deterministic.
@@ -57,15 +57,5 @@ public sealed class Appender(ChronicleQueue queue, int initialBufferSize = 4096)
 
             return ((long)segment.Cycle << 32) | (uint)sequence;
         }
-    }
-
-    private Span<byte> GetBuffer(int paddedLength)
-    {
-        if (_buffer.Length < paddedLength)
-        {
-            _buffer = new byte[paddedLength];
-        }
-
-        return _buffer.AsSpan(0, paddedLength);
     }
 }

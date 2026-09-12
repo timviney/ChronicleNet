@@ -25,6 +25,7 @@ public sealed class ChronicleQueue : IDisposable
 
     internal object WriteLock { get; } = new();
     internal Segment ActiveSegment { get; private set; }
+    internal string DirectoryPath => _directory;
     public DateTime UtcNow => _timeProvider.GetUtcNow().UtcDateTime;
 
     public Appender CreateAppender()
