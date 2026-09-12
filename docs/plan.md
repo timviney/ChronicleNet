@@ -313,11 +313,12 @@ paths**.
 Crash recovery taught one planning lesson: the *protocol* belongs in phase 1 (it is a
 property of the framing), while the recovery *scanner* can wait for phase 6. The phases:
 
-1. **Core framing + persisted append/read** — queue directory, daily `yyyyMMdd.cnq`
-   files, per-file magic/version header, SPB-4 framing with commit protocol, 4-byte
-   alignment, single-writer lock, `Append(span)`, sequential tailer
+1. **Core framing + persisted append/read (complete)** — queue directory, daily
+   `yyyyMMdd.cnq` files, per-file magic/version header, SPB-4 framing with commit
+   protocol, 4-byte alignment, single-writer lock, `Append(span)`, sequential tailer
    (`ToStart`/`ToEnd`, poll read), daily roll with end-of-data mark, restart-same-day
    resume via scan, storage seam with RandomAccess implementation, xUnit coverage.
+   See `openspec/changes/archive/2026-09-12-add-core-queue/`.
 2. **Clean Appender / Tailer API** — finalise the public surface (incl. the exact read
    API shape), XML docs, usability pass.
 3. **Binary serialisation helpers** — hand-rolled, zero-dependency, span-based layer
@@ -343,9 +344,9 @@ property of the framing), while the recovery *scanner* can wait for phase 6. The
   restart-resume tests; multi-tailer independence tests.
 - **Crash simulation**: write a record that stops after the claim (permanent WIP),
   reopen, verify readers stop there and (from phase 6) recovery truncates.
-- **Throughput benchmarks**: BenchmarkDotNet. (The `benchmarks/ChronicleNet.Benchmarks`
-  project currently references xUnit — fix it to reference BenchmarkDotNet when the
-  benchmark phase starts, or sooner.)
+- **Throughput benchmarks**: BenchmarkDotNet. The `benchmarks/ChronicleNet.Benchmarks`
+  project now references BenchmarkDotNet with baseline append/read benchmarks; the full
+  percentile suite lands in phase 10.
 - **Latency measurement**: `Stopwatch.GetTimestamp()` around append/read loops with a
   percentile histogram; report p50/p99/p99.9 — means lie for this kind of system.
 - **Attribution**: substrate comparisons run identical scenarios with the storage

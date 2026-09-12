@@ -71,7 +71,7 @@ context: |
   hot-path APIs, unsafe code, lock-free writer algorithms.
 
   Roadmap:
-  1. Core framing + persisted append/read (commit protocol included)
+  1. Core framing + persisted append/read (commit protocol included) - complete
   2. Clean Appender / Tailer API
   3. Binary serialization helpers
   4. Multiple readers + positioning

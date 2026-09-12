@@ -2,7 +2,7 @@
 
 > A .NET low-latency, persisted event queue inspired by [OpenHFT Chronicle Queue](https://github.com/OpenHFT/Chronicle-Queue).
 
-🚧 **Project status: Active development — Phase 1 (core queue)**
+🚧 **Project status: Active development — Phase 1 (core queue) complete**
 
 The core queue is implemented and under test: a single-process, single-writer, many-reader append-only log persisted to daily segment files, with crash-safe record framing and independent tailers. Design rationale and the roadmap live in `docs/plan.md`; change history is tracked under `openspec/`.
 
