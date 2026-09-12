@@ -57,7 +57,7 @@
 - [x] 7.3 Payload validation: empty and oversized appends rejected, queue unchanged
 - [x] 7.4 WIP invisibility: a record with WIP set is never returned; commit makes it
   readable
-- [ ] 7.5 Roll tests with fake `TimeProvider`: midnight roll writes end-of-data mark and
+- [x] 7.5 Roll tests with fake `TimeProvider`: midnight roll writes end-of-data mark and
   continues in new file; tailer follows across the roll; clock-backwards keeps appending
   to the active file
 - [ ] 7.6 Restart resume: reopen same day preserves records and continues sequence;
