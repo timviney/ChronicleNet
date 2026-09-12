@@ -1,14 +1,16 @@
 namespace ChronicleNet;
 
-public sealed class Appender(ChronicleQueue queue, int initialBufferSize = 4096)
+public sealed class Appender
 {
-    private readonly ReusableBuffer _buffer = new(initialBufferSize); // Reusable buffer for writing records
-    
-    /// <summary>
-    /// Appends one record and returns its 64-bit index. Once this returns, the record is
-    /// readable by tailers in this process and survives the process terminating; it is not
-    /// guaranteed to survive an OS crash or power loss (see <see cref="ChronicleQueue"/>).
-    /// </summary>
+    private readonly ChronicleQueue _queue;
+    private readonly ReusableBuffer _buffer; // Reusable buffer for writing records
+
+    internal Appender(ChronicleQueue queue, int initialBufferSize = 4096)
+    {
+        _queue = queue;
+        _buffer = new ReusableBuffer(initialBufferSize);
+    }
+
     public long Append(ReadOnlySpan<byte> payload) // Example: payload = "hello" => [68 65 6c 6c 6f]
     {
         switch (payload.Length)
@@ -19,24 +21,24 @@ public sealed class Appender(ChronicleQueue queue, int initialBufferSize = 4096)
                 throw new ArgumentOutOfRangeException(nameof(payload), "Payload exceeds the maximum length of 2^30 - 1 bytes.");
         }
 
-        lock (queue.WriteLock) // for now, only a single writer is supported
+        lock (_queue.WriteLock) // for now, only a single writer is supported
         {
-            queue.ThrowIfDisposed();
+            _queue.ThrowIfDisposed();
 
-            Segment segment = queue.ActiveSegment;
-            int currentCycle = Segment.CycleFor(queue.UtcNow);
+            Segment segment = _queue.ActiveSegment;
+            int currentCycle = Segment.CycleFor(_queue.UtcNow);
 
             if (currentCycle > segment.Cycle)
             {
-                queue.RollTo(currentCycle);
-                segment = queue.ActiveSegment;
+                _queue.RollTo(currentCycle);
+                segment = _queue.ActiveSegment;
             }
-            
+
             int length = payload.Length; // Example: hello length = 5
             int paddedLength = Framing.AlignedRecordLength(length); // Example: paddedLength = 12 (5 + 4 header + 3 padding)
             long writePosition = segment.WritePosition;
             int sequence = segment.RecordCount;
-            
+
             Span<byte> buffer = _buffer.Get(paddedLength);
 
             // Claim: header carries WIP | length; payload follows; padding is
@@ -53,7 +55,7 @@ public sealed class Appender(ChronicleQueue queue, int initialBufferSize = 4096)
             // claim (not present) or the committed header (present); never a torn mix.
             Span<byte> commit = stackalloc byte[Framing.HeaderLength];
             Framing.WriteHeader(commit, length); // Example: commit = [ 05 00 00 00 ] (clears WIP)
-            
+
             // Example: [ 05 00 00 00 68 65 6c 6c 6f 00 00 00 ]
             //            ^_header__^ ^__payload___^ ^_pad__^
             segment.Storage.WriteAt(writePosition, commit);

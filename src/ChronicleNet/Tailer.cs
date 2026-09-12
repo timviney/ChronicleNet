@@ -1,7 +1,10 @@
 namespace ChronicleNet;
 
-public sealed class Tailer(ChronicleQueue queue, int initialBufferSize = 4096) : IDisposable
+public sealed class Tailer : IDisposable
 {
+    private readonly ChronicleQueue _queue;
+    private readonly ReusableBuffer _buffer;
+
     // Independent cursor: (cycle, offset). Reading never mutates the log and never
     // coordinates with the writer or other tailers.
     private int _cycle;
@@ -12,8 +15,13 @@ public sealed class Tailer(ChronicleQueue queue, int initialBufferSize = 4096) :
 
     private IStorage? _storage;
     private int _storageCycle;
-    private readonly ReusableBuffer _buffer = new(initialBufferSize);
     private bool _disposed;
+
+    internal Tailer(ChronicleQueue queue, int initialBufferSize = 4096)
+    {
+        _queue = queue;
+        _buffer = new ReusableBuffer(initialBufferSize);
+    }
 
     internal int Cycle => _cycle;
 
@@ -32,9 +40,9 @@ public sealed class Tailer(ChronicleQueue queue, int initialBufferSize = 4096) :
     /// </summary>
     public void ToStart()
     {
-        queue.ThrowIfDisposed();
+        _queue.ThrowIfDisposed();
 
-        _cycle = queue.EarliestCycle();
+        _cycle = _queue.EarliestCycle();
         _offset = FileHeader.Length;
         _sequence = 0;
         _index = -1;
@@ -46,9 +54,9 @@ public sealed class Tailer(ChronicleQueue queue, int initialBufferSize = 4096) :
     /// </summary>
     public void ToEnd()
     {
-        queue.ThrowIfDisposed();
+        _queue.ThrowIfDisposed();
 
-        Segment active = queue.ActiveSegment;
+        Segment active = _queue.ActiveSegment;
         _cycle = active.Cycle;
         _offset = active.WritePosition;
         _sequence = active.RecordCount;
@@ -70,7 +78,7 @@ public sealed class Tailer(ChronicleQueue queue, int initialBufferSize = 4096) :
     /// </returns>
     public bool TryRead(out ReadOnlySpan<byte> payload)
     {
-        queue.ThrowIfDisposed();
+        _queue.ThrowIfDisposed();
         ObjectDisposedException.ThrowIf(_disposed, this);
 
         Span<byte> header = stackalloc byte[Framing.HeaderLength];
@@ -160,7 +168,7 @@ public sealed class Tailer(ChronicleQueue queue, int initialBufferSize = 4096) :
         _storage?.Dispose();
         _storage = null;
 
-        string path = Segment.GetPath(queue.DirectoryPath, _cycle);
+        string path = Segment.GetPath(_queue.DirectoryPath, _cycle);
         if (!File.Exists(path))
         {
             return null; // the day file does not exist yet
@@ -174,7 +182,7 @@ public sealed class Tailer(ChronicleQueue queue, int initialBufferSize = 4096) :
     private bool TryMoveToNextCycle()
     {
         int next = _cycle + 1;
-        if (!File.Exists(Segment.GetPath(queue.DirectoryPath, next)))
+        if (!File.Exists(Segment.GetPath(_queue.DirectoryPath, next)))
         {
             return false;
         }
