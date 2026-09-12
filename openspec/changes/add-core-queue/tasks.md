@@ -52,7 +52,7 @@
 
 - [x] 7.1 Golden-byte format test: known payloads produce exactly the documented bytes
   (file header, record headers, alignment padding)
-- [ ] 7.2 Round-trip: appended payloads read back in order; indexes assigned sequentially
+- [x] 7.2 Round-trip: appended payloads read back in order; indexes assigned sequentially
   per day
 - [ ] 7.3 Payload validation: empty and oversized appends rejected, queue unchanged
 - [ ] 7.4 WIP invisibility: a record with WIP set is never returned; commit makes it
