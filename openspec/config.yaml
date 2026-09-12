@@ -47,7 +47,7 @@ context: |
     same-day resumes by scanning to end of file; never write past an
     end-of-data mark (clock-backwards rule)
   - Index: 64-bit (cycle << 32) | sequence-in-day, cycle = days since epoch
-  - Storage: narrow physical seam (span read/write at offset, length);
+  - Storage: narrow physical seam (span read/write at offset, length, flush);
     v1 implementation = FileStream + System.IO.RandomAccess positional I/O;
     a memory-mapped implementation is a later, benchmarked alternative
   - Writers: single-writer lock; appenders not thread-safe by contract.

@@ -28,6 +28,10 @@ internal sealed class RandomAccessStorage(
     public int ReadAt(long offset, Span<byte> buffer)
         => RandomAccess.Read(_handle, buffer, offset);
 
+    // Flush-to-disk (fsync). Expensive, so it never sits on the append hot path; it exists
+    // for callers that opt into durability beyond the OS page cache.
+    public void Flush() => stream.Flush(flushToDisk: true);
+
     public void Dispose() => stream.Dispose();
 
     private void EnsureCapacity(long requiredLength)

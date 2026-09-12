@@ -161,7 +161,7 @@ implementation can be swapped in later and benchmarked head-to-head:
   Shared logic    framing, commit protocol, roll, recovery scan
                   (written ONCE against the seam)
   ────────────────────────────────────────────────────────────
-  The seam        read/write span at offset · length
+  The seam        read/write span at offset · length · flush
                        │                    │
               ┌────────┴────────┐   ┌───────┴────────────┐
               │ RandomAccess    │   │ Memory-mapped      │  ← later, benchmarked
@@ -261,7 +261,9 @@ dies, the operating system keeps running… no data is lost"):
   or `FileOptions.WriteThrough`, which costs orders of magnitude more latency per write.
 
 An explicit sync option (per-write or interval-based) is a later, measured addition. The
-docs must never claim more durability than is configured. No network filesystems — same
+storage seam already exposes flush-to-disk (`IStorage.Flush`, implemented via
+`FileStream.Flush(flushToDisk: true)`); it is not yet wired to a public durability mode.
+The docs must never claim more durability than is configured. No network filesystems — same
 restriction Chronicle imposes, for the same reasons.
 
 ### 3.9 API shape
