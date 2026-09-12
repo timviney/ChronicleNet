@@ -50,7 +50,7 @@
 
 ## 7. Tests (xUnit)
 
-- [ ] 7.1 Golden-byte format test: known payloads produce exactly the documented bytes
+- [x] 7.1 Golden-byte format test: known payloads produce exactly the documented bytes
   (file header, record headers, alignment padding)
 - [ ] 7.2 Round-trip: appended payloads read back in order; indexes assigned sequentially
   per day
