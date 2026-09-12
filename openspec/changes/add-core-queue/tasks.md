@@ -64,7 +64,7 @@
   fabricated WIP tail is superseded by the next append after reopen
 - [x] 7.7 Multi-tailer independence: two tailers from different positions each see every
   record; reading while writing reports not-present then observes the new record
-- [ ] 7.8 Concurrent appends from multiple threads yield all records exactly once in a
+- [x] 7.8 Concurrent appends from multiple threads yield all records exactly once in a
   valid total order
 - [ ] 7.9 Fresh-handle read test: committed records readable through a newly opened file
   handle without explicit flush
