@@ -86,20 +86,25 @@ the following in mind:
   page and is expected to close most of the gap to the raw file — to be measured, not assumed.
 
 The queue's `0 B/op` confirms the zero-allocation hot-path goal. Reproduce with:
-`dotnet run -c Release --project benchmarks/ChronicleNet.Benchmarks`.
+`./scripts/run-benchmarks.ps1` (or `dotnet run -c Release --project benchmarks/ChronicleNet.Benchmarks`).
 
 ### Kafka comparison
 
 `WriteComparisonBenchmark` and `RoundTripComparisonBenchmark` also include `KafkaWrite`
 (produce + flush) and `KafkaRoundTrip` (produce + flush + consume) cases using
 `Confluent.Kafka` with `acks=all`, so the durability comparison is fair. Kafka is a
-networked broker, so these cases are skipped unless you point the benchmark at one:
+networked broker, so these cases are skipped unless you point the benchmark at one. The
+`scripts/` folder (pwsh 7) wraps the broker lifecycle and the run:
 
 ```pwsh
-$env:KAFKA_BOOTSTRAP_SERVERS = 'localhost:9092'
-dotnet run -c Release --project benchmarks/ChronicleNet.Benchmarks
+./scripts/kafka-up.ps1                                              # start cnq-kafka-bench
+./scripts/run-benchmarks.ps1 -Kafka -Filter '*ComparisonBenchmark*'
+./scripts/run-benchmarks.ps1 -Kafka -BootstrapServers 'host:9092'   # external broker
+./scripts/kafka-down.ps1 -Remove                                    # stop / delete
 ```
 
-The benchmark creates a single-partition topic per case and deletes it afterwards. The
-tabulated Kafka allocations are write / write+read. Kafka numbers depend heavily on the
-broker, replication factor, and network.
+`kafka-up.ps1` runs a single-node Kafka (KRaft, `apache/kafka:latest`) in Docker and waits
+until it is ready, advertising `localhost:9092` by default. The benchmark creates a
+single-partition topic per case and deletes it afterwards. The tabulated Kafka allocations
+are write / write+read. Kafka numbers depend heavily on the broker, replication factor,
+and network — re-run it against your target setup to compare.
