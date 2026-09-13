@@ -10,6 +10,7 @@
 
     <ItemGroup>
       <PackageReference Include="BenchmarkDotNet" Version="0.15.8" />
+      <PackageReference Include="Confluent.Kafka" Version="2.15.1" />
     </ItemGroup>
 
     <ItemGroup>

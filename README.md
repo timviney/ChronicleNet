@@ -81,3 +81,19 @@ the following in mind:
 
 The queue's `0 B/op` confirms the zero-allocation hot-path goal. Reproduce with:
 `dotnet run -c Release --project benchmarks/ChronicleNet.Benchmarks`.
+
+### Kafka comparison
+
+`WriteComparisonBenchmark` and `RoundTripComparisonBenchmark` also include `KafkaWrite`
+(produce + flush) and `KafkaRoundTrip` (produce + flush + consume) cases using
+`Confluent.Kafka` with `acks=all`, so the durability comparison is fair. Kafka is a
+networked broker, so these cases are skipped unless you point the benchmark at one:
+
+```pwsh
+$env:KAFKA_BOOTSTRAP_SERVERS = 'localhost:9092'
+dotnet run -c Release --project benchmarks/ChronicleNet.Benchmarks
+```
+
+The benchmark creates a single-partition topic per case and deletes it afterwards. Kafka
+numbers are deliberately not tabulated above because they depend heavily on the broker,
+replication factor, and network — run it against your target setup to compare.
