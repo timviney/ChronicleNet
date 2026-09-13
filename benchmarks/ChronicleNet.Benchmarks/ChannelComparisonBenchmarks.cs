@@ -14,7 +14,7 @@ namespace ChronicleNet.Benchmarks;
 // Rough throughput comparison against System.Threading.Channels.Channel, a raw
 // (unframed, unflushed) FileStream append, and a Kafka producer/consumer.
 //
-// This is not apples-to-apples. Channel is in-memory and destructive (a read removes the
+// This is not a like-for-like comparison. Channel is in-memory and destructive (a read removes the
 // item); the FileStream baseline keeps no commit protocol and never flushes; Kafka is a
 // networked, replicated broker accessed over TCP; ChronicleNet is persisted, crash-safe,
 // and non-destructive (a tailer never consumes). It answers "what do the persistence and
